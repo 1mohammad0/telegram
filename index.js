@@ -1,15 +1,11 @@
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
+import express from "express";
 
-// ساخت ربات تلگرام با توکن از Environment Variable
+// ====== ربات تلگرام ======
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// اتصال به OpenAI با API Key از Environment Variable
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// دریافت پیام‌ها
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
@@ -21,16 +17,27 @@ bot.on("message", async (msg) => {
       messages: [
         {
           role: "system",
-          content:
-            "تو یک دستیار هوش مصنوعی فارسی هستی، دوستانه، دقیق، صبور و دقیقاً مثل ChatGPT پاسخ می‌دهی.",
+          content: "تو یک دستیار هوش مصنوعی فارسی هستی، دوستانه، صبور و دقیقاً مثل ChatGPT پاسخ می‌دهی."
         },
-        { role: "user", content: text },
-      ],
+        { role: "user", content: text }
+      ]
     });
 
     await bot.sendMessage(chatId, res.choices[0].message.content);
-  } catch (error) {
+  } catch (e) {
     await bot.sendMessage(chatId, "❌ خطا رخ داد، دوباره تلاش کن.");
-    console.error(error);
+    console.error(e);
   }
+});
+
+// ====== سرور HTTP برای Render ======
+const app = express();
+const PORT = process.env.PORT || 10000;
+
+app.get("/", (req, res) => {
+  res.send("Telegram AI Bot is running!");
+});
+
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
